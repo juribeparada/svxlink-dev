@@ -1,6 +1,9 @@
 Instalacion de SvxLink 15.11 + csvx (binarios) en Raspberry Pi Raspbian
 =======================================================================
 
+- Actualizar lista de paquetes:
+sudo apt-get update
+
 - Instalar paquetes necesarios:
 sudo apt-get install libsigc++-2.0-0c2a libgsm1 libpopt0 tcl8.6 libgcrypt20 libspeex1 libasound2 alsa-utils librtlsdr0 libopus0 libusb-1.0-0
 
