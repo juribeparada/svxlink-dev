@@ -1,0 +1,129 @@
+#!/bin/bash
+
+# A very basic configuration script for SvxLink
+# By Andy CA6JAU
+
+SVXLINK_FILE=/etc/svxlink/svxlink.conf
+ECHOLINK_FILE=/etc/svxlink/svxlink.d/ModuleEchoLink.conf
+GPIO_FILE=/etc/svxlink/gpio.conf
+
+if [ "$(id -u)" != "0" ]; then
+  echo -e "You need to be root to run this command...\n"
+  exit 1
+fi
+
+mount -o remount,rw /
+
+echo "Type your callsign (without -L):"
+read callsign
+
+echo "Type your EchoLink password:"
+read password
+
+echo "Write a text for sysopname:"
+read sysopname
+
+echo "Write your location description:"
+read location
+
+echo "Type the text for the banner:"
+read banner
+
+echo "Type a space separated list for admin callsigns:"
+read admins
+
+echo "Type a space separated list for uplink nodes:"
+read uplinks
+
+while true; do
+    read -p "Do you want to enter your network stations list [y/n]?:" yn
+    case $yn in
+        [Yy]* ) read -p "Type a space separated list for your network stations:" netstations; break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+echo "Select 0 for GPIO audio or 1 for USB audio:"
+read audio
+
+echo "Select TX (PTT) hardware: 0 for serial or 1 for GPIO:"
+read txsel
+
+if [ $txsel == "0" ]; then
+	sed -i "s/\(^PTT_TYPE=*\).*/\1SerialPin/" $SVXLINK_FILE
+        sed -i "s/\(^PTT_PORT=*\).*/\1\/dev\/ttyUSB0/" $SVXLINK_FILE
+        sed -i "s/\(^PTT_PIN=*\).*/\1DTRRTS/" $SVXLINK_FILE
+fi
+
+if [ $txsel == "1" ]; then
+	echo "Type the PTT GPIO pin (ex: gpio17):"
+	read txgpio
+        sed -i "s/\(^PTT_TYPE=*\).*/\1GPIO/" $SVXLINK_FILE
+        sed -i "s/\(^PTT_PORT=*\).*/\1GPIO/" $SVXLINK_FILE
+        sed -i "s/\(^PTT_PIN=*\).*/\1${txgpio}/" $SVXLINK_FILE
+        sed -i "s/\(^GPIO_OUT_HIGH=*\).*/\1${txgpio}/" $GPIO_FILE
+fi
+
+echo "Select RX hardware: 0 for VOX, 1 for serial COR or 2 for GPIO COR:"
+read rxsel
+
+if [ $rxsel == "0" ]; then
+        echo "Type the VOX threshold (ex: 1500):"
+        read voxth
+        sed -i "s/\(^SQL_DET=*\).*/\1VOX/" $SVXLINK_FILE
+        sed -i "s/\(^VOX_THRESH=*\).*/\1${voxth}/" $SVXLINK_FILE
+        sed -i "s/\(^SQL_HANGTIME=*\).*/\12000/" $SVXLINK_FILE
+fi
+
+if [ $rxsel == "1" ]; then
+        sed -i "s/\(^SQL_DET=*\).*/\1SERIAL/" $SVXLINK_FILE
+        sed -i "s/\(^SERIAL_PORT=*\).*/\1\/dev\/ttyUSB0/" $SVXLINK_FILE
+        sed -i "s/\(^SERIAL_PIN=*\).*/\1CTS/" $SVXLINK_FILE
+        sed -i "s/\(^SQL_HANGTIME=*\).*/\1500/" $SVXLINK_FILE
+fi
+
+if [ $rxsel == "2" ]; then
+        echo "Type the RX GPIO COR pin (ex: gpio23):"
+        read rxgpio
+        sed -i "s/\(^SQL_DET=*\).*/\1GPIO/" $SVXLINK_FILE
+        sed -i "s/\(^GPIO_SQL_PIN=*\).*/\1${rxgpio}/" $SVXLINK_FILE
+        sed -i "s/\(^GPIO_IN_HIGH=*\).*/\1${rxgpio}/" $GPIO_FILE
+        sed -i "s/\(^SQL_HANGTIME=*\).*/\1500/" $SVXLINK_FILE
+fi
+
+sed -i "s/\(^CALLSIGN=*\).*/\1${callsign}/" $SVXLINK_FILE
+sed -i "s/\(^AUDIO_DEV=*\).*/\1alsa:plughw:${audio}/" $SVXLINK_FILE
+sed -i "s/\(^CALLSIGN=*\).*/\1${callsign}-L/" $ECHOLINK_FILE
+sed -i "s/\(^PASSWORD=*\).*/\1${password}/" $ECHOLINK_FILE
+sed -i "s/\(^SYSOPNAME=*\).*/\1${sysopname}/" $ECHOLINK_FILE
+sed -i "s/\(^LOCATION=*\).*/\1${location}/" $ECHOLINK_FILE
+sed -i "s/\(^INFO_BANNER=*\).*/\1${banner}/" $ECHOLINK_FILE
+sed -i "s/\(^ADMIN_CALLSIGN=*\).*/\1${callsign} ${admins}/" $ECHOLINK_FILE
+sed -i "s/\(^UPLINK_NODES=*\).*/\1${uplinks}/" $ECHOLINK_FILE
+
+if [ -n "$netstations" ]; then
+	sed -i "s/\(^STATUS_LIST=*\).*/\1${netstations}/" $ECHOLINK_FILE
+fi
+
+while true; do
+    read -p "Do you want to configure noip service [y/n]?:" yn
+    case $yn in
+        [Yy]* ) /usr/local/bin/noip2 -C; break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+sync
+mount -o remount,ro /
+systemctl restart svxlink.service
+
+while true; do
+    read -p "Do you want to reboot [y/n]?:" yn
+    case $yn in
+        [Yy]* ) /sbin/reboot; break;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
