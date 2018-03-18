@@ -1,0 +1,99 @@
+#!/bin/bash
+#########################################################
+#                                                       #
+# File based on Pi-Star work:                           #
+# http://www.mw0mwz.co.uk/pi-star (Andy Taylor MW0MWZ)  #
+#                                                       #
+# Modified for SvxLink by Andy CA6JAU                   #
+#                                                       #
+#########################################################
+
+# Service Config
+DAEMON=svxlink
+DAEMON_PATH=/usr/bin/
+PGREP=/usr/bin/pgrep
+KILL=/bin/kill
+SLEEP=/bin/sleep
+
+# Pre-flight checks...
+test -x ${DAEMON_PATH}${DAEMON} || exit 1
+test -r $CONFIG || exit 1
+
+if [ -r /etc/default/$DAEMON ]; then
+	. /etc/default/$DAEMON
+fi
+
+DAEMON_OPTS="--daemon ${RUNASUSER:+--runasuser=$RUNASUSER} ${PIDFILE:+--pidfile=$PIDFILE} ${LOGFILE:+--logfile=$LOGFILE} ${CFGFILE:+--config=$CFGFILE}"
+
+create_files()
+{
+	touch $LOGFILE
+	if [ -n "$RUNASUSER" ]; then
+		chown $RUNASUSER.$RUNASUSER $LOGFILE
+	fi
+
+	mkdir /var/spool/svxlink/voice_mail
+        if [ -n "$RUNASUSER" ]; then
+                chown $RUNASUSER.$RUNASUSER /var/spool/svxlink/voice_mail
+        fi
+}
+
+case "$1" in
+	start)
+		if [ `${PGREP} ${DAEMON}` ]; then
+			echo -e "$DAEMON is already running as PID "`$PGREP $DAEMON`
+			exit 1;
+		else
+			create_files
+			svxlink_gpio_up
+			nice -n -5 ${DAEMON_PATH}${DAEMON} ${DAEMON_OPTS}
+			echo -e "$DAEMON started as PID "`$PGREP $DAEMON`
+			exit 0;
+		fi
+		;;
+
+	stop)
+		if [ `${PGREP} ${DAEMON}` ]; then
+			echo -e "Killing $DAEMON PID "`$PGREP $DAEMON`
+			$KILL `${PGREP} ${DAEMON}`
+			svxlink_gpio_down
+			exit 0;
+		else
+			echo -e "$DAEMON is not running"
+			exit 1;
+		fi
+		;;
+
+	restart)
+		if [ `$PGREP $DAEMON` ]; then
+			echo -e "Killing $DAEMON PID "`$PGREP $DAEMON`
+			$KILL `${PGREP} ${DAEMON}`
+			svxlink_gpio_down
+			$SLEEP 3
+			create_files
+			svxlink_gpio_up
+			nice -n -5 ${DAEMON_PATH}${DAEMON} ${DAEMON_OPTS}
+			echo -e "$DAEMON re-started as PID "`${PGREP} ${DAEMON}`
+			exit 0;
+		else
+			echo -e "$DAEMON is not running"
+			create_files
+			svxlink_gpio_up
+			nice -n -5 ${DAEMON_PATH}${DAEMON} ${DAEMON_OPTS}
+			echo -e "$DAEMON started as PID "`${PGREP} ${DAEMON}`
+			exit 0;
+		fi
+		;;
+
+	status)
+		if [ `${PGREP} ${DAEMON}` ]; then
+			echo -e "$DAEMON is running as PID "`${PGREP} ${DAEMON}`
+		else
+			echo -e "$DAEMON is not running"
+		fi
+		;;
+
+	*)
+		echo $"Usage: $0 {start|stop|restart|status}"
+		exit 1
+esac

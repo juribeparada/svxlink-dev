@@ -1,0 +1,22 @@
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    defaults,ro          0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime,ro  0       1
+# a swapfile is not a swap partition, no line here
+#   use  dphys-swapfile swap[on|off]  for that
+tmpfs			/run			tmpfs	nodev,noatime,nosuid,mode=1777,size=64m		0	0
+tmpfs			/var/tmp		tmpfs	nodev,noatime,nosuid,mode=1777,size=16m		0	0
+tmpfs			/tmp			tmpfs	nodev,noatime,nosuid,mode=1777,size=64m		0	0
+tmpfs			/var/log		tmpfs	nodev,noatime,nosuid,mode=0755,size=64m		0	0
+tmpfs			/var/lib/sudo		tmpfs	nodev,noatime,nosuid,mode=1777,size=16k		0	0
+tmpfs			/var/lib/dhcpcd5	tmpfs	nodev,noatime,nosuid,mode=1777,size=16k		0	0
+tmpfs			/var/lib/dhcp		tmpfs	nodev,noatime,nosuid,mode=1777,size=16k		0	0
+tmpfs			/var/lib/ntp		tmpfs	nodev,noatime,nosuid,mode=1777,size=16k		0	0
+tmpfs			/var/lib/logrotate	tmpfs	nodev,noatime,nosuid,mode=0755,size=16k		0	0
+tmpfs			/var/lib/nginx/body	tmpfs	nodev,noatime,nosuid,mode=1700,size=1m		0	0
+tmpfs			/var/lib/php5/sessions	tmpfs	nodev,noatime,nosuid,mode=0777,size=64k		0	0
+tmpfs			/var/lib/samba/private	tmpfs	nodev,noatime,nosuid,mode=0755,size=4m		0	0
+tmpfs			/var/cache/samba	tmpfs	nodev,noatime,nosuid,mode=0755,size=1m		0	0
+tmpfs			/var/spool/exim4/db	tmpfs	nodev,noatime,nosuid,mode=0750,size=64k		0	0
+tmpfs			/var/spool/exim4/input	tmpfs	nodev,noatime,nosuid,mode=0750,size=64k		0	0
+tmpfs			/var/spool/exim4/msglog	tmpfs	nodev,noatime,nosuid,mode=0750,size=64k		0	0
+tmpfs                   /var/spool/svxlink      tmpfs   nodev,noatime,nosuid,mode=1777,size=16m         0       0

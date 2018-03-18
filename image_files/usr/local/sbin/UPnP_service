@@ -1,0 +1,52 @@
+#!/bin/bash
+#########################################################
+# File base on Pi-Star work:                            #
+# http://www.mw0mwz.co.uk/pi-star (Andy Taylor MW0MWZ)  #
+# Modified by Andy CA6JAU                               #
+#########################################################
+
+# Service Config
+UPNPC=upnpc
+NATPMP=natpmpc
+DAEMON_PATH=/usr/bin/
+PGREP=/usr/bin/pgrep
+KILL=/bin/kill
+SLEEP=/bin/sleep
+ipVar=`hostname -I | cut -d' ' -f1`
+
+# Pre-flight checks...
+test -x ${DAEMON_PATH}${UPNPC} || exit 1
+test -x ${DAEMON_PATH}${NATPMP} || exit 1
+
+# Check that the network is UP and die if its not
+if [ "$(expr length `hostname -I | cut -d' ' -f1`x)" == "1" ]; then
+	exit 0
+fi
+
+case "$1" in
+	start)
+                $UPNPC -a $ipVar 22 22 TCP > /dev/null 2>&1 &
+#                $UPNPC -a $ipVar 80 80 TCP > /dev/null 2>&1 &
+                $UPNPC -a $ipVar 5198 5198 UDP > /dev/null 2>&1 &
+                $UPNPC -a $ipVar 5199 5199 UDP > /dev/null 2>&1 &
+                $NATPMP -a 22 22 TCP > /dev/null 2>&1 &
+#                $NATPMP -a 80 80 TCP > /dev/null 2>&1 &
+                $NATPMP -a 5198 5198 UDP 86400 > /dev/null 2>&1 &
+                $NATPMP -a 5199 5199 UDP 86400 > /dev/null 2>&1 &
+		;;
+
+	stop)
+                $UPNPC -d $ipVar 22 22 TCP > /dev/null 2>&1 &
+                $UPNPC -d $ipVar 80 80 TCP > /dev/null 2>&1 &
+                $UPNPC -d $ipVar 5198 5198 UDP > /dev/null 2>&1 &
+                $UPNPC -d $ipVar 5199 5199 UDP > /dev/null 2>&1 &
+                $NATPMP 22 22 TCP 0 > /dev/null 2>&1 &
+                $NATPMP 80 80 TCP 0 > /dev/null 2>&1 &
+                $NATPMP 5198 5198 UDP 0 > /dev/null 2>&1 &
+                $NATPMP 5199 5199 UDP 0 > /dev/null 2>&1 &
+		;;
+
+	*)
+		echo $"Usage: $0 {start|stop}"
+		exit 1
+esac

@@ -1,0 +1,35 @@
+#!/bin/bash
+#########################################################
+# File base on Pi-Star work:                            #
+# http://www.mw0mwz.co.uk/pi-star (Andy Taylor MW0MWZ)  #
+# Modified by Andy CA6JAU                               #
+#########################################################
+
+case "$1" in
+	start)
+		if tail -n40 /var/log/svxlink | grep "Could not create EchoLink listener"; then
+			sync
+        		/sbin/shutdown -r +1
+		fi
+
+		if tail -n40 /var/log/svxlink | grep "Invalid argument"; then
+			sync
+        		/sbin/shutdown -r +1
+		fi
+
+		if tail -n40 /var/log/svxlink | grep "Turning it off..."; then
+			sync
+        		/sbin/shutdown -r +1
+		fi
+
+		if tail -n40 /var/log/svxlink | grep "EchoLink directory server DNS lookup failed"; then
+			sync
+        		/sbin/shutdown -r +1
+		fi
+
+		;;
+
+	*)
+		echo $"Usage: $0 {start}"
+		exit 1
+esac

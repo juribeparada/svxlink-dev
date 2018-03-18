@@ -1,0 +1,9 @@
+Description=SvxLink watchdog service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/sbin/SvxWatchdog_service start
+
+[Install]
+WantedBy=multi-user.target

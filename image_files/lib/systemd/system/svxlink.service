@@ -1,0 +1,14 @@
+[Unit]
+Description=SvxLinx Service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/sbin/SvxLink_service start
+ExecStop=/usr/local/sbin/SvxLink_service stop
+ExecReload=/usr/local/sbin/SvxLink_service restart
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
