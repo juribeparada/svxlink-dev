@@ -1,0 +1,9 @@
+Description=noip service
+After=syslog.target network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/bin/noip2
+
+[Install]
+WantedBy=multi-user.target
